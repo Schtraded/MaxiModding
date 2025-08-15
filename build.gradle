@@ -1,0 +1,130 @@
+import org.gradle.internal.jvm.Jvm
+
+// For those who want the bleeding edge
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven { url 'https://repo.spongepowered.org/maven'}
+        maven { url 'https://maven.wispforest.io/releases/' }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
+
+/*
+// for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
+plugins {
+    id "net.minecraftforge.gradle.forge" version "2.0.2"
+}
+*/
+version = "1.0"
+group= "com.example.examplemod" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "examplemod"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    
+    // the mappings can be changed at any time, and must be in the following format.
+    // snapshot_YYYYMMDD   snapshot are built nightly.
+    // stable_#            stables are built at the discretion of the MCP team.
+    // Use non-default mappings at your own risk. they may not allways work.
+    // simply re-run your setup task after changing the mappings to update your workspace.
+    mappings = "stable_22"
+    makeObfSourceJar = false
+    coreMod = "com.example.examplemod.mixins.MixinLoader"
+    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    clientJvmArgs += [
+            "-Dfml.coreMods.load=com.example.examplemod.mixins.MixinLoader",
+            "-Dfml.coreMods.containsFMLMod=true",
+            "-DtweakClass=org.spongepowered.asm.launch.MixinTweaker",
+            "-Dmixin.config=mixins.examplemod.json",
+            "-Dorg.lwjgl.opengl.Display.allowSoftwareOpenGL=true",
+            "-Dorg.lwjgl.opengl.Display.enableOSXFullscreen=false",
+            //"-Dmixin.env.remapRefMap=true",
+            //"-Dmixin.env.refMapRemappingFile=build/resources/main/mixins.examplemod.refmap.json"
+    ]
+}
+
+configurations {
+    shade
+    compile.extendsFrom(shade)
+}
+
+repositories {
+    maven { url 'https://repo.spongepowered.org/maven/' }
+}
+
+dependencies {
+    provided 'org.projectlombok:lombok:1.18.30'
+    compile 'com.google.code.gson:gson:2.11.0'
+
+    shade('org.spongepowered:mixin:0.7.10-SNAPSHOT') {
+        exclude module: 'launchwrapper'
+        exclude module: 'guava'
+        exclude module: 'gson'
+        exclude module: 'commons-io'
+        exclude module: 'log4j-core'
+    }
+
+}
+
+processResources
+{
+    // this will ensure that this task is redone when the versions change.
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+                
+        // replace version and mcversion
+        expand 'version':project.version, 'mcversion':project.minecraft.version
+    }
+        
+    // copy everything else, thats not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+task runWithRenderDoc(type: Exec) {
+    def javaHome = System.getenv("JAVA_HOME")
+    if (!javaHome) throw new GradleException("JAVA_HOME is not set!")
+
+    commandLine = [
+            "C:\\Program Files\\RenderDoc\\renderdoccmd.exe",
+            "capture",
+            "--opt-api-validation", // Remove if you don't want api validation
+            "--opt-api-validation-unmute", // Remove if you don't want api validation
+            "--opt-hook-children",
+            "--wait-for-exit",
+            "--working-dir",
+            ".",
+            "$javaHome/bin/java.exe",
+            "-Xmx64m",
+            "-Xms64m",
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5007", // Uncomment for remote debug
+            "-Dorg.gradle.appname=gradlew",
+            "-Dorg.gradle.java.home=$javaHome",
+            "-classpath",
+            "C:\\Users\\Maxim\\Downloads\\forge-1.8.9-11.15.1.2318-1.8.9-mdk (2)\\gradle\\wrapper\\gradle-wrapper.jar",
+            "org.gradle.wrapper.GradleWrapperMain",
+            "runClient",
+    ]
+}
+
+
