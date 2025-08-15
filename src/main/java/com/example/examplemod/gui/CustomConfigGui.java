@@ -144,12 +144,15 @@ public class CustomConfigGui extends GuiScreen {
         //}
         //if(!mc.inGameHasFocus);
 
-        // draw blurred dim background effect (simple translucent rect here)
-        //ExampleMod.blurRenderer.renderBlurredBackground(event);
 
         ScaledResolution sr = new ScaledResolution(mc);
         int sw = sr.getScaledWidth();
         int sh = sr.getScaledHeight();
+
+        // draw blurred dim background effect (simple translucent rect here)
+        //ExampleMod.blurRenderer.renderBlurredBackground(event);
+        int color = 0x40000000; // 0xAARRGGBB, alpha = 25%
+        drawRect(0, 0, sw, sh, color);
 
         // convert mouse to scaled GUI coords
         int mx = (int) (Mouse.getX() * sr.getScaledWidth() / (double) mc.displayWidth);

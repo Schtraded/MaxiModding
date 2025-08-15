@@ -4,7 +4,7 @@ import com.example.examplemod.commands.BlockCommand;
 import com.example.examplemod.commands.ModGuiCommand;
 import com.example.examplemod.gui.CustomConfigGui;
 import com.example.examplemod.helper.KeyHelper;
-import com.example.examplemod.shader.backup.backup2.BlurRenderer;
+import com.example.examplemod.shader.BlurRenderer;
 import com.example.examplemod.shader.trash.BlurHandler;
 import net.minecraft.init.Blocks;
 import net.minecraftforge.client.ClientCommandHandler;
