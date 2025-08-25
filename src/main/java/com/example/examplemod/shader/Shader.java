@@ -11,11 +11,14 @@ public abstract class Shader {
     public int shaderProgram; // Made public so subclasses can access it
     public boolean created; // Made public for external checks
     private final String shaderName;
-    private final List<Uniform<?>> uniforms = new ArrayList<Uniform<?>>();
+    protected final List<Uniform<?>> uniforms = new ArrayList<Uniform<?>>();
 
     public Shader(String shaderName) {
         this.shaderName = shaderName;
         createShader();
+        if (created) {
+            setupUniforms();
+        }
     }
 
     private void createShader() {
@@ -52,9 +55,15 @@ public abstract class Shader {
     public void disable() {
         ShaderHelper.glUseProgram(0);
         GL11.glFlush();
+        GL11.glFinish();
     }
 
     public abstract void updateUniforms();
+
+    // Optional method for subclasses to set up their uniforms
+    protected void setupUniforms() {
+        // Override in subclasses if needed
+    }
 
     protected void addUniform(Uniform<?> uniform) {
         uniforms.add(uniform);

@@ -1,5 +1,8 @@
 package com.example.examplemod.shader;
 
+import com.example.examplemod.shader.circle.CircleShader;
+import com.example.examplemod.shader.gaussianBlur.GaussianBlurShader;
+import com.example.examplemod.shader.sdf.SDFShader;
 import net.minecraft.client.Minecraft;
 
 import java.io.BufferedReader;
@@ -10,7 +13,9 @@ public class ShaderManager {
     private static Shader activeShader;
 
     public enum ShaderTypeInternal {
-        GAUSSIAN_BLUR(GaussianBlurShader.INSTANCE);
+        GAUSSIAN_BLUR(GaussianBlurShader.INSTANCE),
+        CIRCLE(CircleShader.INSTANCE),
+        SDF(SDFShader.INSTANCE);
 
         private final Shader shader;
 
@@ -20,6 +25,10 @@ public class ShaderManager {
 
         public void enable() {
             ShaderManager.enableShader(this.shader);
+        }
+
+        public Shader getShader() {
+            return this.shader;
         }
     }
 
@@ -39,6 +48,10 @@ public class ShaderManager {
             activeShader.disable();
             activeShader = null;
         }
+    }
+
+    public static Shader getActiveShader() {
+        return activeShader;
     }
 
     public static int loadShader(ShaderType type, String fileName) {

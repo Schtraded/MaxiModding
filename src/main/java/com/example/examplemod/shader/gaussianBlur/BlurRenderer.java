@@ -1,10 +1,9 @@
-package com.example.examplemod.shader.backup.backup2;
+package com.example.examplemod.shader.gaussianBlur;
 
+import com.example.examplemod.gui.CustomConfigGui;
 import com.example.examplemod.gui.DummyGui;
-import com.example.examplemod.shader.GaussianBlurShader;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
@@ -55,16 +54,14 @@ public class BlurRenderer {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
     }
 
-    public void renderBlurredBackground(RenderGameOverlayEvent.Post event) {
-        // This fires AFTER everything including hand is rendered
+    // NEW: Method to render blurred background BEFORE GUI elements
+    public void onRenderGameOverlayPre(RenderGameOverlayEvent.Pre event) {
+        // Only blur for the HUD/ALL element and when our GUI is open
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
         if (!GaussianBlurShader.INSTANCE.created || framebuffer == -1) return;
 
         Minecraft mc = Minecraft.getMinecraft();
-
-        // Skip if in GUI
-        //TODO:if (mc.currentScreen != null) return;
-        if (!(Minecraft.getMinecraft().currentScreen instanceof DummyGui)) return;
+        if (!(mc.currentScreen instanceof DummyGui)) return;
 
         // Check if screen size changed
         if (screenWidth != mc.displayWidth || screenHeight != mc.displayHeight) {
@@ -72,17 +69,11 @@ public class BlurRenderer {
             initFramebuffer();
         }
 
-        // Step 1: Capture current screen to texture
+        // Capture the game world (before GUI elements are drawn)
         captureScreenToTexture();
 
-        // Step 2: Apply blur effect
+        // Apply blur effect as background
         applyBlurEffect();
-    }
-
-    @SubscribeEvent
-    public void onRenderGameOverlayPost(RenderGameOverlayEvent.Post event) {
-        if (!(Minecraft.getMinecraft().currentScreen instanceof DummyGui)) return;
-        renderBlurredBackground(event);
     }
 
     private void captureScreenToTexture() {
@@ -111,10 +102,12 @@ public class BlurRenderer {
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
 
-        // Disable depth testing
+        // Disable depth testing and enable blending for transparency
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         // Bind the texture containing the scene
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
@@ -127,9 +120,8 @@ public class BlurRenderer {
         int textureUniform = GL20.glGetUniformLocation(GaussianBlurShader.INSTANCE.shaderProgram, "texture");
         GL20.glUniform1i(textureUniform, 0); // Use texture unit 0
 
-        // The uniforms are automatically updated by the shader's updateUniforms() method
-
-        // Draw fullscreen quad with correct texture coordinates
+        // Draw fullscreen quad with some transparency for better effect
+        GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.8f); // Slightly transparent
         GL11.glBegin(GL11.GL_QUADS);
         GL11.glTexCoord2f(0.0f, 0.0f); GL11.glVertex2f(0.0f, 0.0f);
         GL11.glTexCoord2f(1.0f, 0.0f); GL11.glVertex2f(1.0f, 0.0f);
@@ -140,28 +132,18 @@ public class BlurRenderer {
         // Disable shader
         GaussianBlurShader.INSTANCE.disable();
 
-        // Explicitly unbind texture and reset texture unit
+        // Cleanup
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
-
-        // Reset color to white (important!)
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
+        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset color
+        GL11.glDisable(GL11.GL_BLEND);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL20.glUseProgram(0); // Make sure shader is fully disabled
+        GL20.glUseProgram(0);
 
         // Restore state
         GL11.glPopAttrib();
         GL11.glPopMatrix();
-
-        // CRITICAL: Reset matrices properly for GUI rendering
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glPushMatrix();
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glPopMatrix();
-        GL11.glPushMatrix();
     }
 
     private void cleanupFramebuffer() {

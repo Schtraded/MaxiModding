@@ -1,6 +1,8 @@
 package com.example.examplemod.commands;
 
 import com.example.examplemod.gui.CustomConfigGui;
+import com.example.examplemod.helper.ChatUtils;
+import com.example.examplemod.helper.HotbarUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -37,6 +39,7 @@ public class ModGuiCommand extends CommandBase {
             if (renderer != null) {
                 boolean newVisible = !renderer.isVisible();
                 renderer.setVisible(newVisible);
+                //ChatUtils.hideChatGUI();
 
                 sender.addChatMessage(new ChatComponentText("Custom UI Overlay " + (newVisible ? "opened" : "closed")));
             } else {

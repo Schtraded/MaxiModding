@@ -1,5 +1,7 @@
-package com.example.examplemod.shader;
+package com.example.examplemod.shader.gaussianBlur;
 
+import com.example.examplemod.shader.Shader;
+import com.example.examplemod.shader.Uniform;
 import net.minecraft.client.Minecraft;
 
 public class HorizontalBlurShader extends Shader {

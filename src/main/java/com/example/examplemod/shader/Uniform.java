@@ -6,7 +6,7 @@ public abstract class Uniform<T> {
 
     protected final Shader shader;
     protected final String name;
-    protected final UniformSupplier<T> supplier;
+    public UniformSupplier<T> supplier; // Made non-final so it can be updated
     protected int location = -1;
 
     public Uniform(Shader shader, String name, UniformSupplier<T> supplier) {
@@ -46,6 +46,19 @@ public abstract class Uniform<T> {
         protected void setValue(float[] value) {
             if (value.length >= 2) {
                 GL20.glUniform2f(location, value[0], value[1]);
+            }
+        }
+    }
+
+    public static class Vec4 extends Uniform<float[]> {
+        public Vec4(Shader shader, String name, UniformSupplier<float[]> supplier) {
+            super(shader, name, supplier);
+        }
+
+        @Override
+        protected void setValue(float[] value) {
+            if (value.length >= 4) {
+                GL20.glUniform4f(location, value[0], value[1], value[2], value[3]);
             }
         }
     }

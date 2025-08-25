@@ -19,6 +19,8 @@ public class UIGroup extends UIWidget {
     public static int activeWindow;
     public static ArrayList<String> instances = new ArrayList<>();
     public static ArrayList<ArrayList<Float>> widgetY = new ArrayList<>();
+    public static ArrayList<ArrayList<Float>> widgetYPosition = new ArrayList<>();
+    //public static ArrayList<ArrayList<Float>> widgetYPixel = new ArrayList<>();
     public static ArrayList<Integer> widgetCounter = new ArrayList<>();
     /**The panel is not to be initialized in pixels but in percent of the screen, the percent is to be initialized as an int value**/
     public UIGroup(String text) {
