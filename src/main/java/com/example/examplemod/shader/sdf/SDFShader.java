@@ -15,12 +15,16 @@ public class SDFShader extends Shader {
     private final Uniform.Vec4 cornersUniform;
     private final Uniform.Vec4 colorUniform;
     private final Uniform.Vec4 backgroundColorUniform;
+    private final Uniform.Vec4 borderColorUniform;
+    private final Uniform.Float borderWidthUniform;
 
     private float[] position = {0.0f, 0.0f};
     private float[] size = {0.5f, 0.3f};
     private float[] corners = {0.1f, 0.1f, 0.1f, 0.1f}; // top-right, bottom-right, bottom-left, top-left
     private float[] color = {0.65f, 0.85f, 1.0f, 1.0f};
     private float[] backgroundColor = {0.9f, 0.6f, 0.3f, 1.0f};
+    private float[] borderColor = {1.0f, 1.0f, 1.0f, 1.0f}; // Default white border
+    private float borderWidth = 0.0f; // Default no border
 
     private SDFShader() {
         super("sdf");
@@ -75,6 +79,20 @@ public class SDFShader extends Shader {
             }
         });
 
+        borderColorUniform = new Uniform.Vec4(this, "uBorderColor", new Uniform.UniformSupplier<float[]>() {
+            @Override
+            public float[] get() {
+                return borderColor;
+            }
+        });
+
+        borderWidthUniform = new Uniform.Float(this, "uBorderWidth", new Uniform.UniformSupplier<Float>() {
+            @Override
+            public Float get() {
+                return borderWidth;
+            }
+        });
+
         addUniform(resolutionUniform);
         addUniform(timeUniform);
         addUniform(positionUniform);
@@ -82,6 +100,8 @@ public class SDFShader extends Shader {
         addUniform(cornersUniform);
         addUniform(colorUniform);
         addUniform(backgroundColorUniform);
+        addUniform(borderColorUniform);
+        addUniform(borderWidthUniform);
     }
 
     @Override
@@ -93,9 +113,11 @@ public class SDFShader extends Shader {
         cornersUniform.update();
         colorUniform.update();
         backgroundColorUniform.update();
+        borderColorUniform.update();
+        borderWidthUniform.update();
     }
 
-    // Setters for customization
+    // Existing setters
     public void setPosition(float x, float y) {
         this.position[0] = x;
         this.position[1] = y;
@@ -125,5 +147,37 @@ public class SDFShader extends Shader {
         this.backgroundColor[1] = g;
         this.backgroundColor[2] = b;
         this.backgroundColor[3] = a;
+    }
+
+    // New border setters
+    public void setBorderColor(float r, float g, float b, float a) {
+        this.borderColor[0] = r;
+        this.borderColor[1] = g;
+        this.borderColor[2] = b;
+        this.borderColor[3] = a;
+    }
+
+    public void setBorderWidth(float width) {
+        this.borderWidth = width;
+    }
+
+    // Convenience method to set border with color
+    public void setBorder(float width, float r, float g, float b, float a) {
+        setBorderWidth(width);
+        setBorderColor(r, g, b, a);
+    }
+
+    // Method to disable border
+    public void disableBorder() {
+        this.borderWidth = 0.0f;
+    }
+
+    // Getters for current values
+    public float getBorderWidth() {
+        return borderWidth;
+    }
+
+    public float[] getBorderColor() {
+        return borderColor.clone();
     }
 }

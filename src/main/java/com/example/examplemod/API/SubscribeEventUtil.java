@@ -1,14 +1,19 @@
 package com.example.examplemod.API;
 
 import com.example.examplemod.ExampleMod;
+import com.example.examplemod.gui.ColorPickerGUI;
 import com.example.examplemod.gui.CustomConfigGui;
 import com.example.examplemod.helper.DisplayUtils;
 import com.example.examplemod.helper.GuiUtils;
 import com.example.examplemod.render.LineDrawingUtils;
 import com.example.examplemod.render.TriangleRenderer;
+import com.example.examplemod.shader.gradient.GradientUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Mouse;
+import scala.collection.parallel.ParIterableLike;
 
 public class SubscribeEventUtil {
     /**
@@ -31,9 +36,10 @@ public class SubscribeEventUtil {
         DisplayUtils.update();
         ExampleMod.blurRenderer.onRenderGameOverlayPre(event);
         GuiUtils.onRenderGameOverlay(event);
-        LineDrawingUtils.drawLine(1.0f, 1.0f, 100.0f, 100.0f, 1.0f, 0x80FFFFFF);
-        //net.minecraft.client.gui.Gui.drawRect(0, 0, 100, 50, 0x001E1E1E);
-        TriangleRenderer.drawFilledTriangleGL(0.0f, 0.0f, 100.0f, 50.0f, 0.0f, 50.0f, 0x80FFFFFF);
+        // Convert mouse coordinates
+        int mx = (int) (Mouse.getX() * DisplayUtils.scaledWidth / (double) Minecraft.getMinecraft().displayWidth);
+        int my = DisplayUtils.scaledHeight - (int) (Mouse.getY() * DisplayUtils.scaledHeight / (double) Minecraft.getMinecraft().displayHeight) - 1;
+        ExampleMod.colorPickerGUI.render(Minecraft.getMinecraft().fontRendererObj, DisplayUtils.scaledWidth, DisplayUtils.scaledHeight, mx, my);
     }
 
     /**

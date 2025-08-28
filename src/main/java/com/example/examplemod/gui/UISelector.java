@@ -19,6 +19,16 @@ public class UISelector extends UIWidget {
     public static float SCALE = 1.0f;
     private static final float ARROW_SIZE = 0.015f;
     private float ARROW_HEIGHT;
+    private float centerY;
+    private float selectorCenterX;
+    private float leftArrowX;
+    private float rightArrowX;
+    private String currentOption;
+    private int optionWidth;
+
+    private static final int hoveredColor = 0xFFFFFFFF;
+    private static final int availableColor = 0xFF42A4F5;
+    private static final int noneColor = 0xFF666666;
 
     public UISelector(String label, String groupLabel, String[] options, int defaultIndex) {
         this.label = label;
@@ -39,14 +49,28 @@ public class UISelector extends UIWidget {
 
         float spaceBetweenWidgets = 0.035f;
         UIGroup.widgetY.get(this.belongsToGroupNum - 1).add(spaceBetweenWidgets);
+
+        updateOption();
+    }
+
+    public void update(FontRenderer fr, int sw, int sh) {
+        //TODO: UPDATE WHEN SCREEN IS RESIZED OTHERWISE NOT
+        float buildYBottom = UIGroup.widgetYPosition.get(this.belongsToGroupNum - 1).get(widgetNum - 1) + UIGroup.settingY;
+        this.centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
+
+        float textHeightPercent = (float)fr.FONT_HEIGHT * (SCALE/UIHelper.POSITION_CORRECTION) / sh;
+        this.ARROW_HEIGHT = textHeightPercent * 1.0f;
+
+        // Calculate selector area (right side)
+        this.selectorCenterX = UIGroup.settingX2 - 0.125f - 0.05f;
+        this.leftArrowX = selectorCenterX - 0.125f;
+        this.rightArrowX = selectorCenterX + 0.125f;
     }
 
     @Override
     public void render(FontRenderer fr, int sw, int sh) {
         if (belongsToGroupNum == UIGroup.activeWindow) {
-            float buildYBottom = UIGroup.widgetYPosition.get(this.belongsToGroupNum - 1).get(widgetNum - 1) + UIGroup.settingY;
-
-            float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
+            update(fr, sw, sh);
 
             // Draw label on the left
             fr.drawStringWithShadow(
@@ -56,40 +80,25 @@ public class UISelector extends UIWidget {
                     0xFFFFFF
             );
 
-            float textHeightPercent = (float)fr.FONT_HEIGHT * (SCALE/UIHelper.POSITION_CORRECTION) / sh;
-            this.ARROW_HEIGHT = textHeightPercent * 1.0f;
-
-            // Calculate selector area (right side)
-            float selectorCenterX = UIGroup.settingX2 - 0.125f - 0.05f;
-            float leftArrowX = selectorCenterX - 0.125f;
-            float rightArrowX = selectorCenterX + 0.125f;
-
             // Draw left arrow
-            int hoveredColor = 0xFFFFFFFF;
-            int availableColor = 0xFFE8926F;
-            int noneColor = 0xFF666666;
-            int leftArrowColor = isLeftArrowHovered ? hoveredColor : (selectedIndex > 0 ? availableColor : noneColor);
-            //drawArrow((int)((float)sw * leftArrowX), (int)((float)sh * centerY), (int)((float)sh * ARROW_SIZE), true, leftArrowColor);
+            int leftArrowColor = isLeftArrowHovered ? (selectedIndex > 0 ? hoveredColor : noneColor) : (selectedIndex > 0 ? availableColor : noneColor);
             TriangleRenderer.drawFilledTriangleGL(
-                    centerX, centerY,
-                    centerX - ARROW_HEIGHT, centerY + ARROW_HEIGHT * 0.5f,
-                    centerX - ARROW_HEIGHT, centerY - ARROW_HEIGHT * 0.5f,
-                    0x80FFFFFF
+                    (float)sw * leftArrowX, (float)sh * centerY,
+                    (float)sw * leftArrowX + ARROW_HEIGHT * sh, (float)sh * centerY + ARROW_HEIGHT * sh * 0.5f,
+                    (float)sw * leftArrowX + ARROW_HEIGHT * sh, (float)sh * centerY - ARROW_HEIGHT * sh * 0.5f,
+                    leftArrowColor
             );
 
             // Draw right arrow
-            int rightArrowColor = isRightArrowHovered ? hoveredColor : (selectedIndex < options.length - 1 ? availableColor : noneColor);
-            //drawArrow((int)((float)sw * rightArrowX), (int)((float)sh * centerY), (int)((float)sh * ARROW_SIZE), false, rightArrowColor);
+            int rightArrowColor = isRightArrowHovered ? (selectedIndex < options.length - 1 ? hoveredColor : noneColor) : (selectedIndex < options.length - 1 ? availableColor : noneColor);
             TriangleRenderer.drawFilledTriangleGL(
-                    centerX, centerY,
-                    centerX - ARROW_HEIGHT, centerY + ARROW_HEIGHT * 0.5f,
-                    centerX - ARROW_HEIGHT, centerY - ARROW_HEIGHT * 0.5f,
-                    0x80FFFFFF
+                    (float)sw * rightArrowX, (float)sh * centerY,
+                    (float)sw * rightArrowX - ARROW_HEIGHT * sh, (float)sh * centerY + ARROW_HEIGHT * sh * 0.5f,
+                    (float)sw * rightArrowX - ARROW_HEIGHT * sh, (float)sh * centerY - ARROW_HEIGHT * sh * 0.5f,
+                    rightArrowColor
             );
 
             // Draw current option
-            String currentOption = options[selectedIndex];
-            int optionWidth = fr.getStringWidth(currentOption);
             fr.drawStringWithShadow(
                     currentOption,
                     (int) ((float)sw * selectorCenterX) - optionWidth / 2,
@@ -97,39 +106,6 @@ public class UISelector extends UIWidget {
                     0xFFFFFF
             );
         }
-    }
-
-    private void drawArrow(float centerX, float centerY, int color) {
-        // Draw simple arrow using rectangles
-        //if (pointingLeft) {
-        //    // Left pointing arrow: <
-        //    for (int i = 0; i < size/2; i++) {
-        //        net.minecraft.client.gui.Gui.drawRect(
-        //                centerX - size/2 + i, centerY - i,
-        //                centerX - size/2 + i + 2, centerY - i + 1,
-        //                color
-        //        );
-        //        net.minecraft.client.gui.Gui.drawRect(
-        //                centerX - size/2 + i, centerY + i,
-        //                centerX - size/2 + i + 2, centerY + i + 1,
-        //                color
-        //        );
-        //    }
-        //} else {
-        //    // Right pointing arrow: >
-        //    for (int i = 0; i < size/2; i++) {
-        //        net.minecraft.client.gui.Gui.drawRect(
-        //                centerX + size/2 - i - 1, centerY - i,
-        //                centerX + size/2 - i + 1, centerY - i + 1,
-        //                color
-        //        );
-        //        net.minecraft.client.gui.Gui.drawRect(
-        //                centerX + size/2 - i - 1, centerY + i,
-        //                centerX + size/2 - i + 1, centerY + i + 1,
-        //                color
-        //        );
-        //    }
-        //}
     }
 
     @Override
@@ -140,28 +116,24 @@ public class UISelector extends UIWidget {
             isRightArrowHovered = false;
             return false;
         }
+        final int arrowCenterYpos = (int)((float)sh * centerY);
+        final int arrowSize = (int)(ARROW_HEIGHT * sh);
 
-        float buildYBottom = UIGroup.widgetYPosition.get(this.belongsToGroupNum - 1).get(widgetNum - 1) + UIGroup.settingY;
+        final int leftArrowXpos = (int)((float) sw * leftArrowX);
+        isLeftArrowHovered = (
+                mx >= leftArrowXpos &&
+                mx <= leftArrowXpos + arrowSize &&
+                my >= arrowCenterYpos - (int)((float)arrowSize * 0.5f) &&
+                my <= arrowCenterYpos + (int)((float)arrowSize * 0.5f)
+        );
 
-        float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
-
-        float selectorCenterX = UIGroup.settingX + 0.5f;
-        float leftArrowX = selectorCenterX - 0.1f;
-        float rightArrowX = selectorCenterX + 0.1f;
-
-        int arrowSize = (int)((float)sh * ARROW_SIZE);
-
-        // Check left arrow hover
-        int leftArrowCenterX = (int)((float)sw * leftArrowX);
-        int leftArrowCenterY = (int)((float)sh * centerY);
-        isLeftArrowHovered = (mx >= leftArrowCenterX - arrowSize && mx <= leftArrowCenterX + arrowSize &&
-                my >= leftArrowCenterY - arrowSize && my <= leftArrowCenterY + arrowSize);
-
-        // Check right arrow hover
-        int rightArrowCenterX = (int)((float)sw * rightArrowX);
-        int rightArrowCenterY = (int)((float)sh * centerY);
-        isRightArrowHovered = (mx >= rightArrowCenterX - arrowSize && mx <= rightArrowCenterX + arrowSize &&
-                my >= rightArrowCenterY - arrowSize && my <= rightArrowCenterY + arrowSize);
+        final int rightArrowXpos = (int)((float) sw * rightArrowX);
+        isRightArrowHovered = (
+                mx >= rightArrowXpos - arrowSize &&
+                mx <= rightArrowXpos &&
+                my >= arrowCenterYpos - (int)((float)arrowSize * 0.5f) &&
+                my <= arrowCenterYpos + (int)((float)arrowSize * 0.5f)
+        );
 
         isHovered = isLeftArrowHovered || isRightArrowHovered;
         return isHovered;
@@ -172,10 +144,16 @@ public class UISelector extends UIWidget {
         if (button == 0) {
             if (isLeftArrowHovered && selectedIndex > 0) {
                 selectedIndex--;
+                updateOption();
             } else if (isRightArrowHovered && selectedIndex < options.length - 1) {
                 selectedIndex++;
+                updateOption();
             }
         }
+    }
+    private void updateOption() {
+        this.currentOption = options[selectedIndex];
+        this.optionWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth(currentOption);
     }
 
     public String getSelectedOption() {

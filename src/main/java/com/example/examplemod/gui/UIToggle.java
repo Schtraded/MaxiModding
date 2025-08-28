@@ -64,7 +64,7 @@ public class UIToggle extends UIWidget {
     }
 
     public void update(FontRenderer fr, int sw, int sh) {
-        //TODO: UPDATE WHEN SCREEN IS RESIZED OTHERWISE NOT
+        //TODO: UPDATE WHEN SCREEN IS RESIZED OTHERWISE NOT AND ADD TEH OTHER SH VALUES
         float buildYBottom = UIGroup.widgetYPosition.get(this.belongsToGroupNum - 1).get(widgetNum - 1) + UIGroup.settingY;
 
         this.centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;

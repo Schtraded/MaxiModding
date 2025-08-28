@@ -3,6 +3,7 @@ package com.example.examplemod.shader;
 import com.example.examplemod.shader.circle.CircleShader;
 import com.example.examplemod.shader.gaussianBlur.GaussianBlurShader;
 import com.example.examplemod.shader.sdf.SDFShader;
+import com.example.examplemod.shader.gradient.GradientShader;
 import net.minecraft.client.Minecraft;
 
 import java.io.BufferedReader;
@@ -15,7 +16,8 @@ public class ShaderManager {
     public enum ShaderTypeInternal {
         GAUSSIAN_BLUR(GaussianBlurShader.INSTANCE),
         CIRCLE(CircleShader.INSTANCE),
-        SDF(SDFShader.INSTANCE);
+        SDF(SDFShader.INSTANCE),
+        GRADIENT(GradientShader.INSTANCE);
 
         private final Shader shader;
 

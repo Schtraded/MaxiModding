@@ -121,10 +121,10 @@ public class CustomConfigGui extends GuiScreen {
         widgets.add(new UISelector("Animation Style", "Tooltip", animationStyles, 1));
 
         // Color settings
-        widgets.add(new UIColorPicker("Primary Color", "Colors", 0xE8926F));
-        widgets.add(new UIColorPicker("Accent Color", "Colors", 0x42A4F5));
-        widgets.add(new UIColorPicker("Background Color", "Colors", 0x1E1E1E));
-        widgets.add(new UIColorPicker("Text Color", "Colors", 0xFFFFFF));
+        widgets.add(new UIColorPicker("Primary Color", "Colors", 0xFFE8926F));
+        widgets.add(new UIColorPicker("Accent Color", "Colors", 0xFF42A4F5));
+        widgets.add(new UIColorPicker("Background Color", "Colors", 0xFF1E1E1E));
+        widgets.add(new UIColorPicker("Text Color", "Colors", 0xFFFFFFFF));
     }
 
     public void finalizeWidgetYPercent() {

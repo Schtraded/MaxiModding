@@ -7,6 +7,8 @@ uniform vec2 uSize;
 uniform vec4 uCorners; // top-right, bottom-right, bottom-left, top-left
 uniform vec4 uColor;
 uniform vec4 uBackgroundColor;
+uniform vec4 uBorderColor;
+uniform float uBorderWidth;
 
 // SDF for rounded rectangle with individual corner radii
 // Based on Inigo Quilez's implementation
@@ -43,31 +45,60 @@ void main() {
     // Calculate the signed distance
     float d = sdRoundBox(p, halfSize, corners);
 
-    // Clean fill: inside (d <= 0) gets the main color, outside gets background
+    // Calculate border distances
+    float outerDistance = d;
+    float innerDistance = d + uBorderWidth;
+
     vec3 col;
     float alpha;
 
-    if (d <= 0.0) {
-        // Inside the shape - use main color
-        col = uColor.rgb;
-        alpha = uColor.a;
-    } else {
-        // Outside the shape - use background color
-        col = uBackgroundColor.rgb;
-        alpha = uBackgroundColor.a;
-    }
+    // Anti-aliasing factor
+    float aa = 2.0 / iResolution.y;
 
-    // Smooth anti-aliasing at the edge
-    float edge = smoothstep(0.0, 2.0 / iResolution.y, -d);
+    if (uBorderWidth > 0.0) {
+        // With border logic
+        if (outerDistance <= 0.0) {
+            // We're inside the outer shape
+            if (innerDistance <= 0.0) {
+                // Inside the inner shape (fill area)
+                col = uColor.rgb;
+                alpha = uColor.a;
+            } else {
+                // In the border area
+                col = uBorderColor.rgb;
+                alpha = uBorderColor.a;
+            }
 
-    // If background is transparent, fade out the shape at edges
-    if (uBackgroundColor.a < 0.01) {
-        alpha = uColor.a * edge;
-        col = uColor.rgb;
+            // Apply anti-aliasing at outer edge
+            float outerEdge = smoothstep(0.0, aa, -outerDistance);
+            alpha *= outerEdge;
+
+            // Apply anti-aliasing at inner edge (border to fill transition)
+            if (innerDistance > -aa && innerDistance <= 0.0) {
+                float innerEdge = smoothstep(0.0, aa, -innerDistance);
+                col = mix(uBorderColor.rgb, uColor.rgb, innerEdge);
+                alpha = mix(uBorderColor.a, uColor.a, innerEdge) * outerEdge;
+            }
+        } else {
+            // Outside the shape
+            col = uBackgroundColor.rgb;
+            alpha = uBackgroundColor.a;
+        }
     } else {
-        // Blend between background and shape color at the edge
-        col = mix(uBackgroundColor.rgb, uColor.rgb, edge);
-        alpha = mix(uBackgroundColor.a, uColor.a, edge);
+        // No border - simplified logic
+        if (outerDistance <= 0.0) {
+            // Inside the shape
+            col = uColor.rgb;
+            alpha = uColor.a;
+
+            // Apply anti-aliasing
+            float edge = smoothstep(0.0, aa, -outerDistance);
+            alpha *= edge;
+        } else {
+            // Outside the shape
+            col = uBackgroundColor.rgb;
+            alpha = uBackgroundColor.a;
+        }
     }
 
     gl_FragColor = vec4(col, alpha);

@@ -1,7 +1,11 @@
 package com.example.examplemod.gui;
 
+import com.example.examplemod.helper.DisplayUtils;
+import com.example.examplemod.shader.gradient.GradientUtils;
+import com.example.examplemod.shader.sdf.SDFUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import org.lwjgl.input.Mouse;
 
 public class UIColorPicker extends UIWidget {
     private final String label;
@@ -10,7 +14,7 @@ public class UIColorPicker extends UIWidget {
 
     public static int activeWindow = UIGroup.activeWindow;
     public int belongsToGroupNum;
-    public int instanceNum;
+    public int widgetNum;
 
     public static float SCALE = 1.0f;
     private static final float COLOR_BOX_SIZE = 0.025f;
@@ -31,6 +35,31 @@ public class UIColorPicker extends UIWidget {
             0xFF0080, // Pink
     };
 
+    private float centerY;
+
+    private float colorPickerX;
+    private float colorPickerY;
+    private float colorPickerWidth;
+    private float colorPickerHeight;
+    private float colorSliderX;
+    private float colorSliderY;
+    private float colorSliderWidth;
+    private float colorSliderHeight;
+    private float selectedColorBoxX;
+    private float selectedColorBoxY;
+    private float selectedColorBoxWidth;
+    private float selectedColorBoxHeight;
+    private float borderThickness;
+    private float selectedColorBoxLeft;
+    private float selectedColorBoxTop;
+    private float selectedColorBoxRight;
+    private float selectedColorBoxBottom;
+    private float borderThicknessPX;
+
+    public ColorPickerGUI colorPickerTab;
+
+    private final static float selectedColorBoxWidthScale = 5.0f;
+
     public UIColorPicker(String label, String groupLabel, int defaultColor) {
         this.label = label;
         this.selectedColor = defaultColor;
@@ -44,76 +73,78 @@ public class UIColorPicker extends UIWidget {
         this.belongsToGroupNum = indexOfLabel + 1;
 
         int oldValue = UIGroup.widgetCounter.get(this.belongsToGroupNum - 1);
-        this.instanceNum = oldValue + 1;
+        this.widgetNum = oldValue + 1;
         UIGroup.widgetCounter.set(this.belongsToGroupNum - 1, oldValue + 1);
 
-        float spaceBetweenWidgets = 0.06f; // More space for color picker
+        float spaceBetweenWidgets = 0.04f; // More space for color picker
         UIGroup.widgetY.get(this.belongsToGroupNum - 1).add(spaceBetweenWidgets);
+    }
+
+    public void update(FontRenderer fr, int sw, int sh) {
+        //TODO: UPDATE WHEN SCREEN IS RESIZED OTHERWISE NOT
+        float buildYBottom = UIGroup.widgetYPosition.get(this.belongsToGroupNum - 1).get(widgetNum - 1) + UIGroup.settingY;
+
+        this.centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
+
+        this.colorPickerX = 0.1f * (float)sh;
+        this.colorPickerY = 0.1f * (float)sh;
+        this.colorPickerWidth = 0.1f * (float)sh;
+        this.colorPickerHeight = 0.1f * (float)sh;
+
+        this.colorSliderX = this.colorPickerX + 0.02f * (float)sh;
+        this.colorSliderY = 0.1f * (float)sh;
+        this.colorSliderWidth = 0.02f * (float)sh;
+        this.colorSliderHeight = 0.02f * (float)sh;
+
+        float textHeightPercent = (float)fr.FONT_HEIGHT * (SCALE/UIHelper.POSITION_CORRECTION) / sh;
+        this.selectedColorBoxHeight = textHeightPercent * 1.0f;
+        this.selectedColorBoxWidth = this.selectedColorBoxHeight * this.selectedColorBoxWidthScale;
+        this.selectedColorBoxX = UIGroup.settingX2 - this.selectedColorBoxWidth / 2.0f - 0.02f;
+        this.selectedColorBoxY = this.centerY - this.selectedColorBoxHeight / 2.0f;
+
+        this.selectedColorBoxLeft = sw * this.selectedColorBoxX;
+        this.selectedColorBoxTop = sh * this.selectedColorBoxY;
+        this.selectedColorBoxRight = this.selectedColorBoxLeft + sh * this.selectedColorBoxWidth;
+        this.selectedColorBoxBottom = this.selectedColorBoxTop + sh * this.selectedColorBoxHeight;
+
+        this.borderThickness = this.selectedColorBoxHeight * 0.15f * 2.0f;
+        this.borderThicknessPX = (float)sh * this.selectedColorBoxHeight * 0.15f * 2.0f;
     }
 
     @Override
     public void render(FontRenderer fr, int sw, int sh) {
         if (belongsToGroupNum == UIGroup.activeWindow) {
-            float buildYBottom = UIGroup.settingY;
-            for (int i = 0; i < instanceNum; i++) {
-                buildYBottom += UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(i);
-            }
-            buildYBottom += instanceNum * ((float)fr.FONT_HEIGHT * SCALE / sh);
-
-            float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(instanceNum - 1) / 2.0f;
+            update(fr, sw, sh);
 
             // Draw label
             fr.drawStringWithShadow(
-                    label,
+                    this.label,
                     (int) ((float)sw * UIGroup.settingX),
-                    (int) ((float)sh * (centerY - 0.02f - ((float)fr.FONT_HEIGHT * (SCALE/UIHelper.POSITION_CORRECTION) / sh) / 2.0f)),
+                    (int) ((float)sh * (this.centerY - ((float)fr.FONT_HEIGHT * (SCALE/UIHelper.POSITION_CORRECTION) / sh) / 2.0f)),
                     0xFFFFFF
             );
 
-            // Draw current color preview
-            float previewX = UIGroup.settingX2 - COLOR_BOX_SIZE - 0.01f;
-            float previewY = centerY - 0.02f - COLOR_BOX_SIZE / 2.0f;
+            // Draw selected color border
+            net.minecraft.client.gui.Gui.drawRect(
+                    (int)(this.selectedColorBoxLeft - this.borderThicknessPX * 0.5f),
+                    (int)(this.selectedColorBoxTop - this.borderThicknessPX * 0.5f),
+                    (int)(this.selectedColorBoxRight + this.borderThicknessPX * 0.5f),
+                    (int)(this.selectedColorBoxBottom + this.borderThicknessPX * 0.5f),
+                    0xFFFFFF
+            );
 
-            int previewStartX = (int) ((float)sw * previewX);
-            int previewStartY = (int) ((float)sh * previewY);
-            int previewEndX = (int) ((float)sw * (previewX + COLOR_BOX_SIZE));
-            int previewEndY = (int) ((float)sh * (previewY + COLOR_BOX_SIZE));
+            // Draw selected color background
+            net.minecraft.client.gui.Gui.drawRect(
+                    (int)this.selectedColorBoxLeft,
+                    (int)this.selectedColorBoxTop,
+                    (int)this.selectedColorBoxRight,
+                    (int)this.selectedColorBoxBottom,
+                    this.selectedColor
+            );
 
-            // Draw preview with border
-            net.minecraft.client.gui.Gui.drawRect(previewStartX - 1, previewStartY - 1, previewEndX + 1, previewEndY + 1, 0xFFFFFFFF);
-            net.minecraft.client.gui.Gui.drawRect(previewStartX, previewStartY, previewEndX, previewEndY, 0xFF000000 | selectedColor);
 
-            // Draw color palette
-            float paletteStartX = UIGroup.settingX;
-            float paletteStartY = centerY + 0.01f;
-            int colorsPerRow = 6;
-            float boxSpacing = 0.002f;
-
-            for (int i = 0; i < COLOR_PALETTE.length; i++) {
-                int row = i / colorsPerRow;
-                int col = i % colorsPerRow;
-
-                float colorX = paletteStartX + col * (COLOR_BOX_SIZE + boxSpacing);
-                float colorY = paletteStartY + row * (COLOR_BOX_SIZE + boxSpacing);
-
-                int colorStartX = (int) ((float)sw * colorX);
-                int colorStartY = (int) ((float)sh * colorY);
-                int colorEndX = (int) ((float)sw * (colorX + COLOR_BOX_SIZE));
-                int colorEndY = (int) ((float)sh * (colorY + COLOR_BOX_SIZE));
-
-                // Draw color box with border
-                boolean isSelected = COLOR_PALETTE[i] == selectedColor;
-                int borderColor = isSelected ? 0xFFFFFFFF : 0xFF666666;
-
-                net.minecraft.client.gui.Gui.drawRect(colorStartX - 1, colorStartY - 1, colorEndX + 1, colorEndY + 1, borderColor);
-                net.minecraft.client.gui.Gui.drawRect(colorStartX, colorStartY, colorEndX, colorEndY, 0xFF000000 | COLOR_PALETTE[i]);
-
-                // Draw selection indicator
-                if (isSelected) {
-                    net.minecraft.client.gui.Gui.drawRect(colorStartX - 2, colorStartY - 2, colorEndX + 2, colorEndY + 2, 0xFFE8926F);
-                    net.minecraft.client.gui.Gui.drawRect(colorStartX - 1, colorStartY - 1, colorEndX + 1, colorEndY + 1, 0xFFFFFFFF);
-                }
-            }
+            //GradientUtils.drawGradientRect(this.colorPickerX, this.colorPickerY, this.colorPickerWidth, this.colorPickerHeight, this.selectedColor);
+            //GradientUtils.drawSmoothRainbowRect(this.colorSliderX, this.colorSliderY, this.colorSliderWidth, this.colorSliderHeight);
         }
     }
 
@@ -125,12 +156,12 @@ public class UIColorPicker extends UIWidget {
         }
 
         float buildYBottom = UIGroup.settingY;
-        for (int i = 0; i < instanceNum; i++) {
+        for (int i = 0; i < widgetNum; i++) {
             buildYBottom += UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(i);
         }
-        buildYBottom += instanceNum * ((float)Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT * SCALE / sh);
+        buildYBottom += widgetNum * ((float)Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT * SCALE / sh);
 
-        float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(instanceNum - 1) / 2.0f;
+        float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
 
         // Check if hovering over color palette area
         float paletteStartX = UIGroup.settingX;
@@ -153,12 +184,12 @@ public class UIColorPicker extends UIWidget {
         if (button == 0 && isHovered) {
             // Calculate which color was clicked
             float buildYBottom = UIGroup.settingY;
-            for (int i = 0; i < instanceNum; i++) {
+            for (int i = 0; i < widgetNum; i++) {
                 buildYBottom += UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(i);
             }
-            buildYBottom += instanceNum * ((float)Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT * SCALE / Minecraft.getMinecraft().currentScreen.height);
+            buildYBottom += widgetNum * ((float)Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT * SCALE / Minecraft.getMinecraft().currentScreen.height);
 
-            float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(instanceNum - 1) / 2.0f;
+            float centerY = buildYBottom - UIGroup.widgetY.get(this.belongsToGroupNum - 1).get(widgetNum - 1) / 2.0f;
             float paletteStartX = UIGroup.settingX;
             float paletteStartY = centerY + 0.01f;
             int colorsPerRow = 6;
